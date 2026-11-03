@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>FillGrid Diary</title>
+<style>
+  :root { --bg:#fbf8f3; --fg:#2b2620; --mute:#7a7066; --acc:#e07a5f; --card:#fff; --line:#e9e1d6; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1d1b19; --fg:#efe9e1; --mute:#a99f94; --card:#2a2724; --line:#3a3632; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:440px; margin:0 auto; padding:40px 16px; }
+  h1 { font-size:22px; margin:0 0 8px; }
+  p { color:var(--mute); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  a.btn, button { display:block; width:100%; margin:10px 0 0; padding:13px; border-radius:10px; border:1px solid var(--line);
+    background:var(--card); color:var(--fg); font:inherit; text-align:center; text-decoration:none; cursor:pointer; }
+  a.btn.main { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:600; }
+  #msg { min-height:1.5em; margin-top:12px; font-size:14px; color:var(--mute); text-align:center; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="t">FillGrid Diary</h1>
+  <p id="s"></p>
+  <div class="card">
+    <a class="btn main" id="open" href="#">Open in FillGrid</a>
+    <button id="copy" type="button">Copy diary</button>
+    <a class="btn" id="get" href="https://kys6960.github.io/FillGrid/">Get FillGrid</a>
+    <div id="msg"></div>
+  </div>
+</main>
+<script>
+// 받는 쪽 — AI 가 낸 링크 https://kys6960.github.io/d/#<기록> 이 앱 대신 브라우저로 열렸을 때.
+// 기록은 주소의 # 뒤에만 있다 — 서버로 가지 않고 이 쪽도 어디에 보내지 않는다 (앱으로 넘기기 · 복사만).
+// 앱이 깔려 있으면 보통 앱 링크로 바로 앱이 열려 이 쪽은 보이지 않는다.
+(function () {
+  var L = {
+    en: ['FillGrid Diary', 'This link carries a diary entry from your AI chat. Open it in the FillGrid app to save it.',
+         'Open in FillGrid', 'Copy diary', 'Get FillGrid', 'Copied.', 'This link has no diary entry.'],
+    ko: ['FillGrid 일기', 'AI 대화에서 정리한 일기가 이 링크에 담겨 있습니다. 손쉬운PDF 앱에서 열면 일기장에 써집니다.',
+         '손쉬운PDF 앱에서 열기', '일기 복사', '손쉬운PDF 받기', '복사했습니다.', '이 링크에는 일기가 없습니다.'],
+    ja: ['FillGrid 日記', 'AI との会話でまとめた日記がこのリンクに入っています。FillGrid アプリで開くと日記帳に書き込まれます。',
+         'FillGrid で開く', '日記をコピー', 'FillGrid を入手', 'コピーしました。', 'このリンクには日記がありません。']
+  };
+  var lang = (navigator.language || 'en').slice(0, 2);
+  var w = L[lang] || L.en;
+  document.documentElement.lang = L[lang] ? lang : 'en';
+  var ids = ['t', 's', 'open', 'copy', 'get'];
+  for (var i = 0; i < ids.length; i++) document.getElementById(ids[i]).textContent = w[i];
+  document.title = w[0];
+  var get = document.getElementById('get');
+  if (L[lang]) get.href = 'https://kys6960.github.io/FillGrid/?lang=' + lang;
+
+  var rec = location.hash.slice(1);
+  var msg = document.getElementById('msg');
+  var open = document.getElementById('open'), copy = document.getElementById('copy');
+  if (!rec) { msg.textContent = w[6]; open.style.display = copy.style.display = 'none'; return; }
+  var q = 'r=' + encodeURIComponent(rec);
+  if (/android/i.test(navigator.userAgent)) {
+    // 앱 안 브라우저에서는 앱 링크가 안 걸리기도 한다 → 앱 통로(fillgrid://) · 앱이 없으면 누리집으로
+    open.href = 'intent://d?' + q + '#Intent;scheme=fillgrid;package=com.sonsuiwon.fillgrid;S.browser_fallback_url=' +
+      encodeURIComponent(get.href) + ';end';
+  } else {
+    open.href = 'fillgrid://d?' + q;
+  }
+  copy.onclick = function () {
+    var text = location.href;
+    var done = function () { msg.textContent = w[5]; };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    else { var a = document.createElement('textarea'); a.value = text; document.body.appendChild(a); a.select();
+           try { document.execCommand('copy'); done(); } catch (e) {} a.remove(); }
+  };
+})();
+</script>
+</body>
+</html>
